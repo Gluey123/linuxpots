@@ -10,7 +10,7 @@ read -p "Enter the username for Cowrie: " COWRIE_USER
 adduser --disabled-password --gecos "" $COWRIE_USER
 
 # Switch to the new user and set up Cowrie
-su - $COWRIE_USER <<EOF
+su - $COWRIE_USER <<'EOF'
 
 # Create a directory for Cowrie
 mkdir -p ~/cowrie
@@ -26,20 +26,31 @@ cd cowrie
 python3 -m venv cowrie-env
 source cowrie-env/bin/activate
 
+# Ensure we're inside the virtual environment
+if [ ! -f "cowrie-env/bin/activate" ]; then
+    echo "Failed to create virtual environment"
+    exit 1
+fi
+
 # Install Cowrie dependencies
 pip install --upgrade pip
-pip install -r requirements.txt
+pip install --break-system-packages -r requirements.txt || pip install -r requirements.txt
 
 # Copy the template configuration files to active configuration files
 cp etc/cowrie.cfg.dist etc/cowrie.cfg
 cp etc/userdb.example etc/userdb.txt
 
 # Set Cowrie to listen on port 22 (or change to another port if desired)
-sed -i 's/#listen_endpoints = tcp\:22:interface=0.0.0.0/listen_endpoints = tcp\:22:interface=0.0.0.0/g' etc/cowrie.cfg
+sed -i 's/#listen_endpoints = tcp\:22:interface=0.0.0/listen_endpoints = tcp\:22:interface=0.0.0/g' etc/cowrie.cfg
 
 # Start Cowrie
 bin/cowrie start
 
 EOF
 
-echo "Cowrie SSH Honeypot has been installed and started on port 22"
+if [ $? -eq 0 ]; then
+    echo "Cowrie SSH Honeypot has been installed and started on port 22"
+else
+    echo "Cowrie installation failed."
+fi
+
