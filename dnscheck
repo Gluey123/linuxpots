@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# Function to check DNS settings
+check_dns_settings() {
+    echo "Checking DNS settings..."
+    cat /etc/resolv.conf
+}
+
+# Function to test DNS resolution
+test_dns_resolution() {
+    echo "Testing DNS resolution for pypi.org..."
+    nslookup pypi.org
+    if [ $? -ne 0 ]; then
+        echo "DNS resolution failed. Consider checking the DNS settings."
+        echo "Do you want to change the DNS settings? (yes/no)"
+        read change_dns
+        if [ "$change_dns" == "yes" ]; then
+            echo "Changing DNS settings to use Google's DNS (8.8.8.8)..."
+            echo "nameserver 8.8.8.8" > /etc/resolv.conf
+            echo "DNS settings updated. Please confirm and test again."
+            echo "Run 'nslookup pypi.org' to verify."
+        else
+            echo "DNS settings not changed. Please check manually."
+        fi
+    else
+        echo "DNS resolution successful."
+    fi
+}
+
+# Main Script Execution
+check_dns_settings
+test_dns_resolution
