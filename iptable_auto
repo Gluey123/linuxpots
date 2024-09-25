@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Simple script to add and persist iptables rule for Cowrie on port 2222
+
+# Define the iptables rule (port 22 redirected to 2222)
+RULE="PREROUTING -p tcp --dport 22 -j REDIRECT --to-ports 2222"
+
+# Check if the rule already exists
+if sudo iptables -t nat -C PREROUTING -p tcp --dport 22 -j REDIRECT --to-ports 2222 2>/dev/null; then
+    echo "The iptables rule for redirecting port 22 to 2222 already exists."
+else
+    # Add the iptables rule
+    echo "Adding iptables rule to redirect port 22 to 2222 for Cowrie..."
+    sudo iptables -t nat -A PREROUTING -p tcp --dport 22 -j REDIRECT --to-ports 2222
+
+    # Save the iptables rule to make it persistent
+    if [ -f /etc/debian_version ]; then
+        # Ubuntu/Debian-based systems
+        echo "Saving iptables rule for persistence on Ubuntu/Debian..."
+        sudo apt-get install -y iptables-persistent
+        sudo netfilter-persistent save
+    elif [ -f /etc/redhat-release ]; then
+        # CentOS/RedHat-based systems
+        echo "Saving iptables rule for persistence on CentOS/RedHat..."
+        sudo iptables-save | sudo tee /etc/sysconfig/iptables > /dev/null
+    else
+        echo "Unknown Linux distribution. Please manually save the iptables rule."
+    fi
+
+    echo "The iptables rule has been added and saved."
+fi
+
+# Optional: Show current iptables rules
+echo "Current iptables rules:"
+sudo iptables -t nat -L
+
